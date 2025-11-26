@@ -1,99 +1,61 @@
-package com.ARAOJO.LAB07;
+// src/main/java/com/<your_lastname>/lab7/ProductService.java
 
+package com.ARAOJO.LAB07.service;
 
-package com.example.productinventory.service;
-import com.example.productinventory.model.Product;
+import com.ARAOJO.LAB07.model.Product;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
-// Apply the @Service stereotype annotation
-@Service
+@Service // Stereotype Annotation: Registers this as a business logic component [cite: 35]
 public class ProductService {
 
-    // In-memory 'database' using Map<Long, Product> for quick lookups by ID
-    private final Map<Long, Product> productRepo = new ConcurrentHashMap<>();
+    // Using Map to simulate database (fast lookup by ID) and for thread-safe operations
+    private final Map<Long, Product> inventory = new ConcurrentHashMap<>();
+    // Used to simulate an auto-incrementing primary key
+    private final AtomicLong nextId = new AtomicLong(3);
 
-    // A simple counter to simulate auto-incrementing IDs for new products [cite: 65]
-    private long nextId = 4L;
-
-    // Constructor to initialize with mock data [cite: 37]
     public ProductService() {
-        productRepo.put(1L, new Product(1L, "Laptop Pro", 1200.00));
-        productRepo.put(2L, new Product(2L, "Wireless Mouse", 25.00));
-        productRepo.put(3L, new Product(3L, "Mechanical Keyboard", 75.00));
+        // Initialize with at least three mock products [cite: 37]
+        inventory.put(1L, new Product(1L, "Laptop Pro", 1299.99));
+        inventory.put(2L, new Product(2L, "Wireless Mouse", 25.50));
+        inventory.put(3L, new Product(3L, "USB-C Hub", 50.00));
     }
 
-    // --- CRUD Operations ---
-
-    /**
-     * READ ALL Products: GET /api/products
-     * @return A List of all products.
-     */
-    public List<Product> findAll() {
-        // Return a new ArrayList containing all product values in the map
-        return new ArrayList<>(productRepo.values());
-    }
-
-    /**
-     * READ ONE Product: GET /api/products/{id}
-     * @param id The unique identifier of the product[cite: 16].
-     * @return The Product object if found, or null if it doesn't exist (for 404 handling).
-     */
-    public Product findById(long id) {
-        // Map.get() is efficient for lookup and returns null if the key is not found
-        return productRepo.get(id);
-    }
-
-    /**
-     * CREATE a new Product: POST /api/products
-     * @param newProduct The product data received from the request body[cite: 64].
-     * @return The newly created product with the assigned ID.
-     */
-    public Product save(Product newProduct) {
-        // 1. Assign a new, unique ID to the product [cite: 65]
-        newProduct.setId(nextId);
-
-        // 2. Store the product in the map
-        productRepo.put(nextId, newProduct);
-
-        // 3. Increment the counter for the next product
-        nextId++;
-
+    // CREATE
+    public Product createProduct(Product newProduct) {
+        Long id = nextId.incrementAndGet(); // Assign a new, unique ID [cite: 65]
+        newProduct.setId(id);
+        inventory.put(id, newProduct);
         return newProduct;
     }
 
-    /**
-     * UPDATE an existing Product: PUT /api/products/{id}
-     * @param id The ID from the path variable[cite: 69].
-     * @param productDetails The updated data from the request body[cite: 69].
-     * @return The updated Product if the ID exists, or null if not found (for 404 handling)[cite: 70, 71].
-     */
-    public Product update(long id, Product productDetails) {
-        if (productRepo.containsKey(id)) {
-            // Get the existing product
-            Product existingProduct = productRepo.get(id);
-
-            // Apply updates from the request body (ID is preserved)
-            existingProduct.setName(productDetails.getName());
-            existingProduct.setPrice(productDetails.getPrice());
-
-            // The map entry is already updated since we modified the reference `existingProduct`
-            return existingProduct;
-        }
-        // ID not found
-        return null;
+    // READ ALL
+    public List<Product> findAll() {
+        return new ArrayList<>(inventory.values());
     }
 
-    /**
-     * DELETE a Product: DELETE /api/products/{id}
-     * @param id The unique identifier of the product.
-     * @return true if the product was successfully deleted, false if the ID was not found.
-     */
-    public boolean delete(long id) {
-        // Map.remove(key) returns the value that was removed, or null if the key wasn't found.
-        return productRepo.remove(id) != null;
+    // READ ONE
+    public Optional<Product> findById(Long id) {
+        return Optional.ofNullable(inventory.get(id));
+    }
+
+    // UPDATE
+    public Optional<Product> updateProduct(Long id, Product productDetails) {
+        if (inventory.containsKey(id)) {
+            productDetails.setId(id); // Ensure the updated product retains the original ID
+            inventory.put(id, productDetails);
+            return Optional.of(productDetails);
+        }
+        return Optional.empty(); // Not found
+    }
+
+    // DELETE
+    public boolean deleteProduct(Long id) {
+        return inventory.remove(id) != null;
     }
 }
