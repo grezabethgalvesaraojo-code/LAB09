@@ -1,0 +1,18 @@
+spring:
+  # The 'datasource' prefix groups all connection properties [cite: 19]
+  datasource:
+                url: jdbc:mysql://localhost:3306/product_db
+                username: root
+                password: ""
+    # DRIVER: Specifies the JDBC driver class 
+                driver-class-name: com.mysql.cj.jdbc.Driver #
+
+  # JPA settings for Hibernate (the default provider)
+  jpa:
+    hibernate:
+      # DDL Generation: Controls how Hibernate interacts with the schema on startup 
+      ddl-auto: update
+    # Explicitly tells Hibernate the type of database for optimized SQL generation 
+    database-platform: org.hibernate.dialect.MySQLDialect
+    # If true, Hibernate will log all generated SQL statements to the console 
+    show-sql: true
